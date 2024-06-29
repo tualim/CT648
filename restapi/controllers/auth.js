@@ -1,7 +1,7 @@
 const { validationResult } = require("express-validator/check");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-
+const Rac = require("../models/rac");
 const User = require("../models/user");
 
 exports.signup = async (req, res, next) => {
@@ -52,8 +52,28 @@ exports.loginQR = async (req, res, next) => {
     throw error;
   }
 
-  
-  res.status(200);
+  const authHeader = req.get("Authorization");
+  if (!authHeader) {
+    const error = new Error("Not authenticated.");
+    error.statusCode = 401;
+    throw error;
+  }
+  const token = authHeader.split(" ")[1];
+  let decodedToken;
+  try {
+    decodedToken = jwt.verify(token, "somesupersecretsecret"); //DO NOT TEST 3rd party only test if our app behave correctly if it runs correctly when verify
+  } catch (err) {
+    err.statusCode = 500;
+    throw err;
+  }
+  if (!decodedToken) {
+    const error = new Error("Not authenticated.");
+    error.statusCode = 401;
+    throw error;
+  }
+  req.userId = decodedToken.userId;
+  lineNotify(token);
+  res.status(200).json({ token: token, userId: req.userId.toString() });
 };
 
 exports.login = async (req, res, next) => {
@@ -96,7 +116,7 @@ const lineNotify = async (req, res, next) => {
   await fetch("https://notify-api.line.me/api/notify", {
     method: "POST",
     headers: {
-      Authorization: "Bearer MeHN6VNE4a3m4CnB2IPJAvly7hNvlMdCCVi9pyzDaGh",
+      Authorization: "Bearer xc9Od32gX4RgWZxtuWncJ4ucyrkFyk7Xylif0TmygGA",
       "Content-Type": "application/x-www-form-urlencoded",
     },
     body: new URLSearchParams({
@@ -107,7 +127,6 @@ const lineNotify = async (req, res, next) => {
         `,
     }),
   });
-  res.json({ message: "alert successfull" });
 };
 
 exports.getUserStatus = async (req, res, next) => {

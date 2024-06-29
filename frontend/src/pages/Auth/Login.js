@@ -102,6 +102,7 @@ class Login extends Component {
         </form>
         <br />
         <QRCodeSVG value={this.props.qrcode} />
+        <p>{this.props.qrcode}</p>
         {/* <Button design="raised" type="submit" qrregen={this.props.qrregen}>
           Regenerate QR
         </Button> */}
